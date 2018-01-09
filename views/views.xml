@@ -1,0 +1,172 @@
+<odoo>
+  <data>
+    <!-- explicit list view definition -->
+    <record model="ir.ui.view" id="cursos_sede_form">
+      <field name="name">cursos_sede.form</field>
+      <field name="model">cursos.sede</field>
+      <field name="mode">primary</field>
+      <field name="arch" type="xml">
+        <form>
+          <field name="name"/>
+        </form>
+      </field>
+    </record>
+
+   <record model="ir.ui.view" id="cursos_sede_tree">
+      <field name="name">cursos_sede.tree</field>
+      <field name="model">cursos.sede</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name"/>
+        </tree>
+      </field>
+    </record>
+
+    <!-- actions opening views on models -->
+    <record model="ir.actions.act_window" id="cursos.action_window_sede">
+      <field name="name">Sedes</field>
+      <field name="res_model">cursos.sede</field>
+      <field name="view_type">form</field>
+      <field name="view_id" ref="cursos_sede_tree"/>
+    </record>
+
+    <record model="ir.ui.view" id="cursos_curso_form">
+      <field name="name">cursos.curso.form</field>
+      <field name="model">cursos.curso</field>
+      <field name="arch" type="xml">
+        <form  string="Curso">
+         <group>
+          <field name="name"/>
+<!--
+          <field name="sede_id"/>
+-->
+         </group>
+        </form>
+      </field>
+    </record>
+
+   <record model="ir.ui.view" id="cursos_curso_tree">
+      <field name="name">cursos_curso.tree</field>
+      <field name="model">cursos.curso</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="name"/>
+        </tree>
+      </field>
+    </record>
+
+    <!-- actions opening views on models -->
+    <record model="ir.actions.act_window" id="cursos.action_window_curso">
+      <field name="name">Cursos</field>
+      <field name="res_model">cursos.curso</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+
+   <record model="ir.ui.view" id="cursos_horario_tree">
+      <field name="name">cursos_horario.tree</field>
+      <field name="model">cursos.horario</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="curso_id"/>
+          <field name="cupo"/>
+          <field name="dia"/>
+          <field name="hora_inicio" widget="float_time"/>
+          <field name="hora_fin" widget="float_time"/>
+        </tree>
+      </field>
+    </record>
+
+    <!-- actions opening views on models -->
+    <record model="ir.actions.act_window" id="cursos.action_window_horario">
+      <field name="name">Horarios</field>
+      <field name="res_model">cursos.horario</field>
+      <field name="view_type">form</field>
+      <field name="view_id" ref="cursos_horario_tree"/>
+    </record>
+<!--
+    <record model="ir.ui.view" id="cursos_horario_form">
+      <field name="name">cursos_horario.form</field>
+      <field name="model">cursos.horario</field>
+      <field name="arch" type="xml">
+        <form>
+          <field name="curso_id"/>
+          <field name="cupo"/>
+          <field name="dia"/>
+          <field name="hora_inicio" widget="float_time"/>
+          <field name="hora_fin" widget="float_time"/>
+          <field name="profesores"/>
+          <field name="alumnos"/>
+        </form>
+      </field>
+    </record>
+
+   <record model="ir.ui.view" id="cursos_horario_tree">
+      <field name="name">cursos_horario.tree</field>
+      <field name="model">cursos.horario</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="curso_id"/>
+          <field name="cupo"/>
+        </tree>
+      </field>
+    </record>
+
+    <record model="ir.actions.act_window" id="cursos.action_window_horario">
+      <field name="name">Horarios</field>
+      <field name="res_model">cursos.horario</field>
+      <field name="view_type">form</field>
+      <field name="view_id" ref="cursos_horario_tree"/>
+    </record>
+-->
+    <!--
+    <record model="ir.actions.act_window" id="cursos.action_window_sede_form">
+      <field name="name">sede form</field>
+      <field name="res_model">cursos.sede</field>
+      <field name="view_mode">form</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="nombre"/>
+        </tree>
+      </field>
+    </record>
+    -->
+
+    <!-- server action to the one above -->
+    <!--
+    <record model="ir.actions.server" id="cursos.action_server">
+      <field name="name">cursos server</field>
+      <field name="model_id" ref="model_cursos_cursos"/>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "tree,form",
+          "res_model": self._name,
+        }
+      </field>
+    </record>
+    -->
+
+    <!-- Top menu item -->
+    <menuitem name="Cursos" id="cursos.menu_root"/>
+    <!-- menu categories -->
+    <menuitem name="Cursos" id="cursos.categ_cursos" parent="cursos.menu_root"/>
+    <!--
+    <menuitem name="Menu 2" id="cursos.menu_2" parent="cursos.menu_root"/>
+    -->
+    <!-- actions -->
+    <menuitem name="Sedes" id="cursos.menu_sede" parent="cursos.categ_cursos"
+              action="cursos.action_window_sede"/>
+    <menuitem name="Cursos" id="cursos.menu_curso" parent="cursos.categ_cursos"
+              action="cursos.action_window_curso"/>
+    <menuitem name="Horarios" id="cursos.menu_horario" parent="cursos.categ_cursos"
+              action="cursos.action_window_horario"/>
+<!--
+    <menuitem name="Horarios" id="cursos.menu_horario" parent="cursos.categ_cursos"
+              action="cursos.action_window_horario"/>
+-->
+    <!--
+    <menuitem name="Server to list" id="cursos" parent="cursos.menu_2"
+              action="cursos.action_server"/>
+    -->
+  </data>
+</odoo>
