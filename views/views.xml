@@ -34,12 +34,10 @@
       <field name="name">cursos.curso.form</field>
       <field name="model">cursos.curso</field>
       <field name="arch" type="xml">
-        <form  string="Curso">
+        <form string="Curso">
          <group>
           <field name="name"/>
-<!--
           <field name="sede_id"/>
--->
          </group>
         </form>
       </field>
@@ -51,6 +49,7 @@
       <field name="arch" type="xml">
         <tree>
           <field name="name"/>
+          <field name="sede_id"/>
         </tree>
       </field>
     </record>
@@ -60,6 +59,24 @@
       <field name="name">Cursos</field>
       <field name="res_model">cursos.curso</field>
       <field name="view_mode">tree,form</field>
+    </record>
+
+    <record model="ir.ui.view" id="cursos_horario_form">
+      <field name="name">cursos_horario.form</field>
+      <field name="model">cursos.horario</field>
+      <field name="arch" type="xml">
+        <form string="Horario">
+         <group>
+          <field name="curso_id"/>
+          <field name="cupo"/>
+          <field name="dia"/>
+          <field name="hora_inicio" widget="float_time"/>
+          <field name="hora_fin" widget="float_time"/>
+          <field name="profesores"/>
+          <field name="alumnos"/>
+         </group>
+        </form>
+      </field>
     </record>
 
    <record model="ir.ui.view" id="cursos_horario_tree">
@@ -80,8 +97,7 @@
     <record model="ir.actions.act_window" id="cursos.action_window_horario">
       <field name="name">Horarios</field>
       <field name="res_model">cursos.horario</field>
-      <field name="view_type">form</field>
-      <field name="view_id" ref="cursos_horario_tree"/>
+      <field name="view_mode">tree,form</field>
     </record>
 <!--
     <record model="ir.ui.view" id="cursos_horario_form">

@@ -31,3 +31,12 @@ class horario(models.Model):
     alumnos = fields.Many2many('res.partner','horario_partner_rel2', 'horario_id','partner_id', 'Alumnos')
     hora_inicio = fields.Float('Hora Inicio')
     hora_fin = fields.Float('Hora Fin')
+
+class horario(models.Model):
+
+    _name = 'cursos.historial'
+
+    fecha_inicio = fields.Date('Fecha Inicio')
+    fecha_fin = fields.Date('Fecha Fin')
+    alumno_id = fields.Many2one('res.partner','Alumno')
+    horario_id = fields.Many2one('cursos.horario','Horario')
