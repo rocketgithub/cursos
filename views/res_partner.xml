@@ -1,0 +1,21 @@
+<odoo>
+  <data>
+        <record id="cursos_view_res_partner_form" model="ir.ui.view">
+            <field name="name">cursos_res_partner.form</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//notebook" position="inside">
+                        <page string="Historial">
+                            <group>
+                                <field name="historial_curso_ids"/>
+                            </group>
+                        </page>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+  </data>
+</odoo>
