@@ -1,7 +1,19 @@
 <odoo>
   <data>
     <!-- explicit list view definition -->
-<!--
+
+   <record model="ir.ui.view" id="cursos_asistencia_tree">
+      <field name="name">cursos_asistencia.tree</field>
+      <field name="model">cursos.asistencia</field>
+      <field name="arch" type="xml">
+        <tree editable="bottom">
+          <field name="alumno_id"/>
+          <field name="fecha"/>
+          <field name="horario_id"/>
+        </tree>
+      </field>
+    </record>
+
    <record model="ir.ui.view" id="cursos_historial_form">
       <field name="name">cursos_historial.form</field>
       <field name="model">cursos.historial</field>
@@ -12,20 +24,22 @@
           <field name="horario_id"/>
           <field name="fecha_inicio"/>
           <field name="fecha_fin"/>
+          <field name="congelado"/>
         </form>
       </field>
     </record>
--->
+
 
    <record model="ir.ui.view" id="cursos_historial_tree">
       <field name="name">cursos_historial.tree</field>
       <field name="model">cursos.historial</field>
       <field name="arch" type="xml">
-        <tree>
+        <tree editable="bottom">
           <field name="alumno_id"/>
           <field name="horario_id"/>
           <field name="fecha_inicio"/>
           <field name="fecha_fin"/>
+          <field name="congelado"/>
         </tree>
       </field>
     </record>
@@ -136,14 +150,33 @@
             <form string="Parameters">
                 <group>
                     <field name="curso_id"/>
-                    <field name="horarios"/>
+                    <field name="horarios_asignaciones"/>
+                    <field name="alumno_id"/>
+                    <field name="fecha_inicio"/>
                 </group>
                 <footer>
                     <button name="buscar_cupo" string="Buscar cupo" type="object" class="btn-primary"/>
+                    <button name="asignar" string="Asignar" type="object" class="btn-primary"/>
                     <button string="Cancel" class="btn-default" special="cancel" />
                 </footer>
             </form>
         </field>
+    </record>
+
+   <record model="ir.ui.view" id="cursos_asignacion_horario_tree">
+      <field name="name">cursos_asignacion_horario.tree</field>
+      <field name="model">cursos.asignacion_horario</field>
+      <field name="arch" type="xml">
+        <tree editable="bottom">
+          <field name="seleccionado"/>
+          <field name="cupo"/>
+          <field name="dia"/>
+          <field name="hora_inicio" widget="float_time"/>
+          <field name="hora_fin" widget="float_time"/>
+          <field name="cupo_disponible"/>
+          <field name="congelados"/>
+        </tree>
+      </field>
     </record>
 
     <record id="cursos.action_window_asignacion" model="ir.actions.act_window">
