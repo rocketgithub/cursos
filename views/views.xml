@@ -186,6 +186,45 @@
         <field name="view_mode">form</field>
         <field name="target">new</field>
     </record>
+
+    <!-- Asistencias -->
+
+    <record id="view_asistencia_wizard" model="ir.ui.view">
+        <field name="name">Asistencia</field>
+        <field name="model">cursos.asistencia_wizard</field>
+        <field name="arch" type="xml">
+            <form string="Parameters">
+                <group>
+                    <field name="horario_id"/>
+                    <field name="fecha"/>
+                    <field name="asistencias_alumnos"/>
+                </group>
+                <footer>
+                    <button name="buscar_alumnos" string="Buscar Alumnos" type="object" class="btn-primary"/>
+                    <button name="guardar_asistencia" string="Guardar Asistencia" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-default" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+   <record model="ir.ui.view" id="cursos_asistencia_wizard_alumno_tree">
+      <field name="name">cursos_asistencia_wizard_alumno.tree</field>
+      <field name="model">cursos.asistencia_wizard_alumno</field>
+      <field name="arch" type="xml">
+        <tree editable="bottom">
+          <field name="nombre"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="cursos.action_window_asistencia" model="ir.actions.act_window">
+        <field name="name">Asistencias</field>
+        <field name="res_model">cursos.asistencia_wizard</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
 <!--
     <record model="ir.ui.view" id="cursos_horario_form">
       <field name="name">cursos_horario.form</field>
@@ -266,6 +305,9 @@
 
     <menuitem name="Asignaciones" id="cursos.menu_signacion" parent="cursos.categ_cursos"
               action="cursos.action_window_asignacion"/>
+
+    <menuitem name="Asistencias" id="cursos.menu_asistencia" parent="cursos.categ_cursos"
+              action="cursos.action_window_asistencia"/>
 <!--
     <menuitem name="Horarios" id="cursos.menu_horario" parent="cursos.categ_cursos"
               action="cursos.action_window_horario"/>

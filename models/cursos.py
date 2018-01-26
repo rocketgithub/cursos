@@ -85,11 +85,6 @@ class asignacion(models.TransientModel):
 
         logging.warn(horarios_array)
         self.write({'horarios_asignaciones': horarios_array})
- #       logging.warn(self.horarios)
-#        logging.warn("Despues del write")
-#        return {
-#            "type": "ir.actions.do_nothing",
-#        }
         return {
             'context': self.env.context,
             'view_type': 'form',
@@ -104,7 +99,6 @@ class asignacion(models.TransientModel):
     def asignar(self):
         logging.warn("ASIGNAR")
         logging.warn(self.alumno_id)
-#        logging.warn(self.horarios[0].id)
         for a_horario in self.horarios_asignaciones:
             logging.warn(a_horario.seleccionado)
             if a_horario.seleccionado:
@@ -155,6 +149,47 @@ class asistencia_wizard(models.TransientModel):
 
     def buscar_alumnos(self):
         logging.warn("BUSCAR ALUMNOS ASIGNADOS EN HORARIO")
+        historiales = self.env['cursos.historial'].search([('horario_id','=',self.horario_id.id),('fecha_fin','=',False),('congelado','=',False)])
+        alumnos_array = []
+        for historial in historiales:
+            wizard_alumno =  {'alumno_id':historial.alumno_id.id }
+            wizard_alumno_id = self.env['cursos.asistencia_wizard_alumno'].create(wizard_alumno)
+            logging.warn(wizard_alumno_id)
+            w_alumno = (4,wizard_alumno_id.id)
+            alumnos_array.append(w_alumno)
+
+        logging.warn(alumnos_array)
+        self.write({'asistencias_alumnos': alumnos_array})
+            
+        return {
+            'context': self.env.context,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'cursos.asistencia_wizard',
+            'res_id': self.id,
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+        }
+
+    def guardar_asistencia(self):
+        logging.warn("GUARDAR ASISTENCIA")
+        for asistencia_alumno in self.asistencias_alumnos:
+            asistencia =  {'fecha':self.fecha, 'alumno_id':asistencia_alumno.alumno_id.id, 'horario_id':self.horario_id.id }
+            asistencia_id = self.env['cursos.asistencia'].create(asistencia)
+            logging.warn("DESPUES DE CREATE")
+            logging.warn(asistencia_id)
+        return {
+            'context': self.env.context,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'cursos.asistencia_wizard',
+            'res_id': self.id,
+            'view_id': False,
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+        }
+
 
 class asistencia_wizard_alumno(models.TransientModel):
 
