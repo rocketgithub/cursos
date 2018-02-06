@@ -24,7 +24,6 @@
           <field name="horario_id"/>
           <field name="fecha_inicio"/>
           <field name="fecha_fin"/>
-          <field name="congelado"/>
         </form>
       </field>
     </record>
@@ -39,7 +38,7 @@
           <field name="horario_id"/>
           <field name="fecha_inicio"/>
           <field name="fecha_fin"/>
-          <field name="congelado"/>
+          <field name="fecha_congelamiento"/>
         </tree>
       </field>
     </record>
@@ -110,13 +109,17 @@
       <field name="arch" type="xml">
         <form string="Horario">
          <group>
-          <field name="curso_id"/>
-          <field name="cupo"/>
-          <field name="dia"/>
-          <field name="hora_inicio" widget="float_time"/>
-          <field name="hora_fin" widget="float_time"/>
-          <field name="profesores"/>
-          <field name="historial_curso_ids"/>
+             <group>
+                 <field name="curso_id"/>
+                 <field name="cupo"/>
+                 <field name="dia"/>
+             </group>
+             <group>
+                 <field name="hora_inicio" widget="float_time"/>
+                 <field name="hora_fin" widget="float_time"/>
+             </group>
+             <field name="profesores"/>
+             <field name="historial_curso_ids"/>
          </group>
         </form>
       </field>
@@ -149,10 +152,14 @@
         <field name="arch" type="xml">
             <form string="Parameters">
                 <group>
-                    <field name="curso_id"/>
+                    <group>
+                        <field name="curso_id"/>
+                        <field name="fecha_inicio"/>
+                    </group>
+                    <group>
+                        <field name="alumno_id"/>
+                    </group>
                     <field name="horarios_asignaciones"/>
-                    <field name="alumno_id"/>
-                    <field name="fecha_inicio"/>
                 </group>
                 <footer>
                     <button name="buscar_cupo" string="Buscar cupo" type="object" class="btn-primary"/>
@@ -195,8 +202,13 @@
         <field name="arch" type="xml">
             <form string="Parameters">
                 <group>
-                    <field name="horario_id"/>
-                    <field name="fecha"/>
+                    <group>
+                        <field name="fecha"/>
+                    </group>
+                    <group>
+                        <field name="hora" widget="float_time"/>
+                        <field name="dia"/>
+                    </group>
                     <field name="asistencias_alumnos"/>
                 </group>
                 <footer>

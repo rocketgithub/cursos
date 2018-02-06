@@ -3,6 +3,7 @@
 from odoo import api, models, tools, fields
 
 import logging
+import datetime
 
 class sede(models.Model):
 
@@ -36,6 +37,14 @@ class horario(models.Model):
     hora_fin = fields.Float('Hora Fin')
     historial_curso_ids = fields.One2many('cursos.historial','horario_id', domain=[('fecha_fin','=',False)],string = 'Historial' )
 
+    def name_get(self):
+        segundos = self.hora_inicio * 3600
+        hora_minutos = str(datetime.timedelta(seconds=segundos))
+        logging.warn(hora_minutos[0:5])
+        segundos2 = self.hora_fin * 3600
+        hora_minutos2 = str(datetime.timedelta(seconds=segundos2))
+        return [(self.id, self.curso_id.name + ", "+self.dia+ ", "+hora_minutos[0:5]+ "-"+hora_minutos2[0:5])]
+
 class historial(models.Model):
 
     _name = 'cursos.historial'
@@ -44,17 +53,19 @@ class historial(models.Model):
     fecha_fin = fields.Date('Fecha Fin')
     alumno_id = fields.Many2one('res.partner','Alumno')
     horario_id = fields.Many2one('cursos.horario','Horario')
-    congelado = fields.Boolean('Congelado')
+#    congelado = fields.Boolean('Congelado')
+    fecha_congelamiento = fields.Date(related='alumno_id.fecha_congelamiento', store=True)
+    nombre_alumno = fields.Char(related='alumno_id.name', store=True)
 
 class asignacion(models.TransientModel):
 
     _name = 'cursos.asignacion'
 
-    curso_id = fields.Many2one('cursos.curso','Curso')
+    curso_id = fields.Many2one('cursos.curso','Curso', required=True)
 #    horario_ids = fields.One2many('cursos.horario','curso_id', string = 'Horarios' )
 #    horarios = fields.Many2many('cursos.horario','asignacion_horario_rel1', 'asignacion_id','horario_id', 'Horarios')
-    alumno_id = fields.Many2one('res.partner','Alumno')
-    fecha_inicio = fields.Date('Fecha Inicio')
+    alumno_id = fields.Many2one('res.partner','Alumno', required=True)
+    fecha_inicio = fields.Date('Fecha Inicio', required=True)
     horarios_asignaciones = fields.Many2many('cursos.asignacion_horario','asignacion_asignacionhorario_rel1', 'asignacion_id','asignacion_horario_id', 'Horarios')
 
     def buscar_cupo(self):
@@ -74,9 +85,13 @@ class asignacion(models.TransientModel):
                 logging.warn(horario)
                 cupo_disp = horario.cupo - len(historiales)
                 congelados = 0
+                fecha_hoy = datetime.datetime.now()
                 for historial in historiales:
-                    if historial.congelado:
-                        congelados = congelados +1
+                    if historial.fecha_congelamiento:
+                        fecha_c = datetime.datetime.strptime(historial.fecha_congelamiento, "%Y-%m-%d")
+                        logging.warn(fecha_c)
+                        if fecha_c >= fecha_hoy:
+                            congelados = congelados +1
                 asign_horario =  {'seleccionado': False, 'cupo_disponible':cupo_disp, 'horario_id':horario.id, 'congelados': congelados }
                 asign_horario_id = self.env['cursos.asignacion_horario'].create(asign_horario)
                 logging.warn(asign_horario_id.id)
@@ -106,16 +121,7 @@ class asignacion(models.TransientModel):
                 hist_id = self.env['cursos.historial'].create(historial)
                 logging.warn("DESPUES DE CREATE")
                 logging.warn(hist_id)
-        return {
-            'context': self.env.context,
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'cursos.asignacion',
-            'res_id': self.id,
-            'view_id': False,
-            'type': 'ir.actions.act_window',
-            'target': 'new',
-        }
+        return {'type': 'ir.actions.act_window_close'}
 
 class asignacion_horario(models.TransientModel):
 
@@ -143,20 +149,50 @@ class asistencia_wizard(models.TransientModel):
 
     _name = 'cursos.asistencia_wizard'
 
-    horario_id = fields.Many2one('cursos.horario','Horario')
-    fecha = fields.Date('Fecha')
+#    horario_id = fields.Many2one('cursos.horario','Horario')
+    fecha = fields.Date('Fecha', required=True)
+    hora = fields.Float('Hora', required=True)
+    dia = fields.Selection([
+        ('lunes', 'Lunes'),
+        ('martes', 'Martes'),
+        ('miercoles', 'Miércoles'),
+        ('jueves', 'Jueves'),
+        ('viernes', 'Viernes'),
+        ('sabado', 'Sábado')], 'Dia', required=True)
     asistencias_alumnos = fields.Many2many('cursos.asistencia_wizard_alumno','asistencia_wizard_alumnos_rel1', 'asistencia_wizard_id','asistencia_wizard_alumno_id', 'Alumnos')
 
     def buscar_alumnos(self):
-        logging.warn("BUSCAR ALUMNOS ASIGNADOS EN HORARIO")
-        historiales = self.env['cursos.historial'].search([('horario_id','=',self.horario_id.id),('fecha_fin','=',False),('congelado','=',False)])
+#        f = datetime.datetime.strptime(self.fecha, "%Y-%m-%d")
+#        logging.warn(f.weekday())
+#        historiales = self.env['cursos.historial'].search([('horario_id','=',self.horario_id.id),('fecha_fin','=',False),('congelado','=',False)])
+        historiales = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('fecha_fin','=',False),('horario_id.dia','=',self.dia)])
+        logging.warn(historiales)
+        historiales2 = sorted(historiales, key=lambda hist: hist.nombre_alumno)
+        logging.warn("SORTED ")
+        logging.warn(historiales2)
+        historiales3 = sorted(historiales2, key=lambda hist: hist.alumno_id.name)
+        logging.warn("SORTED 2")
+        logging.warn(historiales3)
         alumnos_array = []
-        for historial in historiales:
-            wizard_alumno =  {'alumno_id':historial.alumno_id.id }
-            wizard_alumno_id = self.env['cursos.asistencia_wizard_alumno'].create(wizard_alumno)
-            logging.warn(wizard_alumno_id)
-            w_alumno = (4,wizard_alumno_id.id)
-            alumnos_array.append(w_alumno)
+        fecha_hoy = datetime.datetime.now()
+        # Limpiar detalle de asistencias alumnos
+        for aa in self.asistencias_alumnos:
+            self.write({'asistencias_alumnos': [(2,aa.id)]})
+
+        for historial in historiales2:
+            agregar = True
+            if historial.fecha_congelamiento:
+                fecha_c = datetime.datetime.strptime(historial.fecha_congelamiento, "%Y-%m-%d")
+                logging.warn(fecha_c)
+                if fecha_c >= fecha_hoy:
+                    agregar = False
+
+            if agregar:
+                wizard_alumno =  {'alumno_id':historial.alumno_id.id, 'horario_id':historial.horario_id.id }
+                wizard_alumno_id = self.env['cursos.asistencia_wizard_alumno'].create(wizard_alumno)
+                logging.warn(wizard_alumno_id)
+                w_alumno = (4,wizard_alumno_id.id)
+                alumnos_array.append(w_alumno)
 
         logging.warn(alumnos_array)
         self.write({'asistencias_alumnos': alumnos_array})
@@ -175,21 +211,12 @@ class asistencia_wizard(models.TransientModel):
     def guardar_asistencia(self):
         logging.warn("GUARDAR ASISTENCIA")
         for asistencia_alumno in self.asistencias_alumnos:
-            asistencia =  {'fecha':self.fecha, 'alumno_id':asistencia_alumno.alumno_id.id, 'horario_id':self.horario_id.id }
+            asistencia =  {'fecha':self.fecha, 'alumno_id':asistencia_alumno.alumno_id.id, 'horario_id':asistencia_alumno.horario_id.id }
             asistencia_id = self.env['cursos.asistencia'].create(asistencia)
             logging.warn("DESPUES DE CREATE")
             logging.warn(asistencia_id)
-        return {
-            'context': self.env.context,
-            'view_type': 'form',
-            'view_mode': 'form',
-            'res_model': 'cursos.asistencia_wizard',
-            'res_id': self.id,
-            'view_id': False,
-            'type': 'ir.actions.act_window',
-            'target': 'new',
-        }
 
+        return {'type': 'ir.actions.act_window_close'}
 
 class asistencia_wizard_alumno(models.TransientModel):
 
@@ -197,3 +224,4 @@ class asistencia_wizard_alumno(models.TransientModel):
 
     alumno_id = fields.Many2one('res.partner','Alumno')
     nombre = fields.Char(related='alumno_id.name', store=False)
+    horario_id = fields.Many2one('cursos.horario','Horario')
