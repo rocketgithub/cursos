@@ -17,7 +17,7 @@
                                 <field name="asistencia_curso_ids"/>
                             </group>
                         </page>
-                    </xpath>
+                    </xpath> 
                 </data>
             </field>
         </record>

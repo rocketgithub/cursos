@@ -30,7 +30,7 @@ class horario(models.Model):
         ('miercoles', 'Miércoles'),
         ('jueves', 'Jueves'),
         ('viernes', 'Viernes'),
-        ('sabado', 'Sábado')], 'Dia')
+        ('sabado', 'Sábado')], 'Dia', default='lunes')
     profesores = fields.Many2many('res.partner','horario_partner_rel1', 'horario_id','partner_id', 'Profesores')
 #    alumnos = fields.Many2many('res.partner','horario_partner_rel2', 'horario_id','partner_id', 'Alumnos')
     hora_inicio = fields.Float('Hora Inicio')
@@ -56,6 +56,7 @@ class historial(models.Model):
 #    congelado = fields.Boolean('Congelado')
     fecha_congelamiento = fields.Date(related='alumno_id.fecha_congelamiento', store=True)
     nombre_alumno = fields.Char(related='alumno_id.name', store=True)
+    fecha_inicio_congelamiento = fields.Date(related='alumno_id.fecha_inicio_congelamiento', store=True)
 
 class asignacion(models.TransientModel):
 
@@ -88,9 +89,10 @@ class asignacion(models.TransientModel):
                 fecha_hoy = datetime.datetime.now()
                 for historial in historiales:
                     if historial.fecha_congelamiento:
-                        fecha_c = datetime.datetime.strptime(historial.fecha_congelamiento, "%Y-%m-%d")
-                        logging.warn(fecha_c)
-                        if fecha_c >= fecha_hoy:
+                        fecha_c_f = datetime.datetime.strptime(historial.fecha_congelamiento, "%Y-%m-%d")
+                        fecha_c_i = datetime.datetime.strptime(historial.fecha_inicio_congelamiento, "%Y-%m-%d")
+                        logging.warn(fecha_c_f)
+                        if (fecha_c_f >= fecha_hoy) & (fecha_c_i <= fecha_hoy):
                             congelados = congelados +1
                 asign_horario =  {'seleccionado': False, 'cupo_disponible':cupo_disp, 'horario_id':horario.id, 'congelados': congelados }
                 asign_horario_id = self.env['cursos.asignacion_horario'].create(asign_horario)
@@ -129,12 +131,12 @@ class asignacion_horario(models.TransientModel):
 
     seleccionado = fields.Boolean('Sel')
     cupo_disponible = fields.Integer('Cupo Disponible')
-    horario_id = fields.Many2one('cursos.horario','horario', required=True)
-    cupo = fields.Integer(related='horario_id.cupo', store=False)
-    dia = fields.Selection(related='horario_id.dia', store=False)
-    hora_inicio = fields.Float(related='horario_id.hora_inicio', store=False)
-    hora_fin = fields.Float(related='horario_id.hora_fin', store=False)
-    congelados = fields.Integer('Congelados')
+    horario_id = fields.Many2one('cursos.horario','horario', required=True,  readonly= True)
+    cupo = fields.Integer(related='horario_id.cupo', store=False, readonly= True)
+    dia = fields.Selection(related='horario_id.dia', store=False, readonly= True)
+    hora_inicio = fields.Float(related='horario_id.hora_inicio', store=False, readonly= True)
+    hora_fin = fields.Float(related='horario_id.hora_fin', store=False, readonly= True)
+    congelados = fields.Integer('Congelados', readonly= True)
 
 
 class asistencia(models.Model):
@@ -144,6 +146,10 @@ class asistencia(models.Model):
     fecha = fields.Date('Fecha')
     alumno_id = fields.Many2one('res.partner','Alumno')
     horario_id = fields.Many2one('cursos.horario','Horario')
+    estado_asistencia = fields.Selection([
+        ('si', 'Si Llego'),
+        ('no', 'No Llego'),
+        ('tarde', 'Llego tarde')], 'Tipo Asistencia')
 
 class asistencia_wizard(models.TransientModel):
 
@@ -182,9 +188,10 @@ class asistencia_wizard(models.TransientModel):
         for historial in historiales2:
             agregar = True
             if historial.fecha_congelamiento:
-                fecha_c = datetime.datetime.strptime(historial.fecha_congelamiento, "%Y-%m-%d")
-                logging.warn(fecha_c)
-                if fecha_c >= fecha_hoy:
+                fecha_c_f = datetime.datetime.strptime(historial.fecha_congelamiento, "%Y-%m-%d")
+                fecha_c_i = datetime.datetime.strptime(historial.fecha_inicio_congelamiento, "%Y-%m-%d")
+                logging.warn(fecha_c_f)
+                if (fecha_c_f >= fecha_hoy) & (fecha_c_i <= fecha_hoy):
                     agregar = False
 
             if agregar:
@@ -211,7 +218,7 @@ class asistencia_wizard(models.TransientModel):
     def guardar_asistencia(self):
         logging.warn("GUARDAR ASISTENCIA")
         for asistencia_alumno in self.asistencias_alumnos:
-            asistencia =  {'fecha':self.fecha, 'alumno_id':asistencia_alumno.alumno_id.id, 'horario_id':asistencia_alumno.horario_id.id }
+            asistencia =  {'fecha':self.fecha, 'alumno_id':asistencia_alumno.alumno_id.id, 'horario_id':asistencia_alumno.horario_id.id, 'estado_asistencia':asistencia_alumno.estado_asistencia }
             asistencia_id = self.env['cursos.asistencia'].create(asistencia)
             logging.warn("DESPUES DE CREATE")
             logging.warn(asistencia_id)
@@ -222,6 +229,10 @@ class asistencia_wizard_alumno(models.TransientModel):
 
     _name = 'cursos.asistencia_wizard_alumno'
 
-    alumno_id = fields.Many2one('res.partner','Alumno')
-    nombre = fields.Char(related='alumno_id.name', store=False)
+    alumno_id = fields.Many2one('res.partner','Alumno', readonly= True)
+    nombre = fields.Char(related='alumno_id.name', store=False, readonly= True)
     horario_id = fields.Many2one('cursos.horario','Horario')
+    estado_asistencia = fields.Selection([
+        ('si', 'Si Llego'),
+        ('no', 'No Llego'),
+        ('tarde', 'Llego tarde')], 'Tipo Asistencia', required=True, default='si')
