@@ -82,6 +82,8 @@
          <group>
           <field name="name"/>
           <field name="sede_id"/>
+          <field name="fecha_inicio"/>
+          <field name="fecha_fin"/>
          </group>
         </form>
       </field>
@@ -94,6 +96,8 @@
         <tree>
           <field name="name"/>
           <field name="sede_id"/>
+          <field name="fecha_inicio"/>
+          <field name="fecha_fin"/>
         </tree>
       </field>
     </record>
@@ -119,6 +123,7 @@
              <group>
                  <field name="hora_inicio" widget="float_time"/>
                  <field name="hora_fin" widget="float_time"/>
+                 <button name="generar_eventos" string="Generar Eventos" type="object" class="btn-primary"/>
              </group>
              <field name="profesores"/>
              <field name="historial_curso_ids"/>
@@ -178,12 +183,12 @@
       <field name="arch" type="xml">
         <tree editable="bottom">
           <field name="seleccionado"/>
-          <field name="cupo"/>
-          <field name="dia"/>
-          <field name="hora_inicio" widget="float_time"/>
-          <field name="hora_fin" widget="float_time"/>
+          <field name="cupo" readonly="True"/>
+          <field name="dia" readonly="True"/>
+          <field name="hora_inicio" widget="float_time" readonly="True"/>
+          <field name="hora_fin" widget="float_time" readonly="True"/>
           <field name="cupo_disponible"/>
-          <field name="congelados"/>
+          <field name="congelados" />
         </tree>
       </field>
     </record>
@@ -239,6 +244,56 @@
         <field name="view_type">form</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
+    </record>
+
+   <!-- Eventos -->
+    <record id="cursos_evento_calendar" model="ir.ui.view">
+        <field name="name">cursos_evento.calendar</field>
+        <field name="model">cursos.evento</field>
+        <field name="arch" type="xml">
+            <calendar string="Eventos"  date_start="fecha_inicio" date_stop="fecha_fin" color="curso_id">
+                <field name="curso_name"/>
+            </calendar>
+        </field>
+    </record>
+
+
+    <record model="ir.ui.view" id="cursos_evento_form">
+      <field name="name">cursos_evento.form</field>
+      <field name="model">cursos.evento</field>
+      <field name="arch" type="xml">
+        <form string="Evento">
+         <group>
+             <group>
+                 <field name="fecha_inicio"/>
+                 <field name="fecha_fin"/>
+             </group>
+             <group>
+                 <field name="horario_id"/>
+             </group>
+             <field name="profesores"/>
+             <field name="historial_curso_ids"/>
+         </group>
+        </form>
+      </field>
+    </record>
+
+   <record model="ir.ui.view" id="cursos_evento_tree">
+      <field name="name">cursos_evento.tree</field>
+      <field name="model">cursos.evento</field>
+      <field name="arch" type="xml">
+        <tree>
+          <field name="fecha_inicio"/>
+          <field name="fecha_fin"/>
+          <field name="horario_id"/>
+        </tree>
+      </field>
+    </record>
+
+    <record model="ir.actions.act_window" id="cursos.action_window_evento">
+      <field name="name">Eventos</field>
+      <field name="res_model">cursos.evento</field>
+      <field name="view_mode">tree,form,calendar</field>
     </record>
 <!--
     <record model="ir.ui.view" id="cursos_horario_form">
@@ -323,6 +378,9 @@
 
     <menuitem name="Asistencias" id="cursos.menu_asistencia" parent="cursos.categ_cursos"
               action="cursos.action_window_asistencia"/>
+
+    <menuitem name="Eventos" id="cursos.menu_evento" parent="cursos.categ_cursos"
+              action="cursos.action_window_evento"/>
 <!--
     <menuitem name="Horarios" id="cursos.menu_horario" parent="cursos.categ_cursos"
               action="cursos.action_window_horario"/>
