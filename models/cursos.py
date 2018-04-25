@@ -8,7 +8,6 @@ import pytz
 from pytz import timezone
 
 dias_array = [('lunes', 'Lunes'),('martes', 'Martes'),('miercoles', 'Miércoles'),('jueves', 'Jueves'),('viernes', 'Viernes'),('sabado', 'Sábado')]
-dias_array2 = [('lunes'),('martes'),('miercoles'),('jueves'),('viernes'),('sabado')]
 
 class sede(models.Model):
 
@@ -33,7 +32,6 @@ class horario(models.Model):
     cupo = fields.Integer('Cupo')
     dia = fields.Selection(dias_array, 'Dia', default='lunes')
     profesores = fields.Many2many('res.partner','horario_partner_rel1', 'horario_id','partner_id', 'Profesores')
-#    alumnos = fields.Many2many('res.partner','horario_partner_rel2', 'horario_id','partner_id', 'Alumnos')
     hora_inicio = fields.Float('Hora Inicio')
     hora_fin = fields.Float('Hora Fin')
     historial_curso_ids = fields.One2many('cursos.historial','horario_id', domain=[('fecha_fin','=',False)],string = 'Historial', readonly= True )
@@ -44,27 +42,25 @@ class horario(models.Model):
         for hr in self:
             segundos = hr.hora_inicio * 3600
             hora_minutos = str(datetime.timedelta(seconds=segundos))
-            logging.warn(hora_minutos[0:5])
             segundos2 = hr.hora_fin * 3600
             hora_minutos2 = str(datetime.timedelta(seconds=segundos2))
             res.append((hr.id, hr.curso_id.name + ", "+hr.dia+ ", "+hora_minutos[0:5]+ "-"+hora_minutos2[0:5]))
         return res
 
     def generar_eventos(self):
-        dia_semana = dias_array2.index(self.dia)
-
+        dia_semana = [i for i in range(len(dias_array)) if dias_array[i][0] == self.dia][0]
+        logging.warn(dia_semana)
         hora_i = int(self.hora_inicio)
         minuto_i = int((self.hora_inicio % 1) * 60)
         hora_f = int(self.hora_fin)
         minuto_f = int((self.hora_fin % 1) * 60)
 
-#        fecha_inicio = datetime.datetime.strptime(self.curso_id.fecha_inicio, "%Y-%m-%d")
         fecha_inicio = fields.Datetime.from_string(self.curso_id.fecha_inicio)
-#        fecha_fin = datetime.datetime.strptime(self.curso_id.fecha_fin, "%Y-%m-%d")
         fecha_fin = fields.Datetime.from_string(self.curso_id.fecha_fin)
         fecha = fecha_inicio
-        dias_dif =1
+        dias_dif = 1
         while fecha<=fecha_fin:
+            logging.warn(fecha)
             if dia_semana == fecha.weekday():
                 f_i = fecha.replace(hour=hora_i+6, minute=minuto_i)
                 f_f = fecha.replace(hour=hora_f+6, minute=minuto_f)
@@ -81,7 +77,6 @@ class historial(models.Model):
     fecha_fin = fields.Date('Fecha Fin')
     alumno_id = fields.Many2one('res.partner','Alumno')
     horario_id = fields.Many2one('cursos.horario','Horario')
-#    congelado = fields.Boolean('Congelado')
     fecha_congelamiento = fields.Date(related='alumno_id.fecha_congelamiento', store=True)
     nombre_alumno = fields.Char(related='alumno_id.name', store=True)
     fecha_inicio_congelamiento = fields.Date(related='alumno_id.fecha_inicio_congelamiento', store=True)
@@ -90,28 +85,22 @@ class asignacion(models.TransientModel):
 
     _name = 'cursos.asignacion'
 
-    curso_id = fields.Many2one('cursos.curso','Curso', required=True)
-#    horario_ids = fields.One2many('cursos.horario','curso_id', string = 'Horarios' )
-#    horarios = fields.Many2many('cursos.horario','asignacion_horario_rel1', 'asignacion_id','horario_id', 'Horarios')
-    alumno_id = fields.Many2one('res.partner','Alumno', required=True)
+    curso_id = fields.Many2one('cursos.curso', 'Curso', required=True)
+    alumno_id = fields.Many2one('res.partner', 'Alumno', required=True)
     fecha_inicio = fields.Date('Fecha Inicio', required=True)
-    horarios_asignaciones = fields.Many2many('cursos.asignacion_horario','asignacion_asignacionhorario_rel1', 'asignacion_id','asignacion_horario_id', 'Horarios')
+    horarios_asignaciones = fields.One2many('cursos.asignacion_horario', 'asignacion_id', 'Horarios')
+    fecha_fin = fields.Date('Fecha Fin')
 
     def buscar_cupo(self):
+        for ha in self.horarios_asignaciones:
+            self.write({'horarios_asignaciones': [(2,ha.id)]})
 
-        logging.warn("BUSCAR CUPO")
-        logging.warn(self.curso_id.name)
         horarios = self.env['cursos.horario'].search([('curso_id','=',self.curso_id.id)])
-        logging.warn(horarios)
         horarios_array = []
         for horario in horarios:
-            logging.warn(horario)
             historiales = self.env['cursos.historial'].search([('horario_id','=',horario.id),('fecha_fin','=',False)])
-            logging.warn(len(historiales))
             # Buscar cupo
             if len(historiales) < horario.cupo:
-                logging.warn("ingresar horario ")
-                logging.warn(horario)
                 cupo_disp = horario.cupo - len(historiales)
                 congelados = 0
                 fecha_hoy = datetime.datetime.now()
@@ -119,16 +108,13 @@ class asignacion(models.TransientModel):
                     if historial.fecha_congelamiento:
                         fecha_c_f = datetime.datetime.strptime(historial.fecha_congelamiento, "%Y-%m-%d")
                         fecha_c_i = datetime.datetime.strptime(historial.fecha_inicio_congelamiento, "%Y-%m-%d")
-                        logging.warn(fecha_c_f)
                         if (fecha_c_f >= fecha_hoy) & (fecha_c_i <= fecha_hoy):
                             congelados = congelados +1
                 asign_horario =  {'seleccionado': False, 'cupo_disponible':cupo_disp, 'horario_id':horario.id, 'congelados': congelados }
                 asign_horario_id = self.env['cursos.asignacion_horario'].create(asign_horario)
-                logging.warn(asign_horario_id.id)
                 h_cupo = (4,asign_horario_id.id)
                 horarios_array.append(h_cupo)
 
-        logging.warn(horarios_array)
         self.write({'horarios_asignaciones': horarios_array})
         return {
             'context': self.env.context,
@@ -144,7 +130,12 @@ class asignacion(models.TransientModel):
     def asignar(self):
         for a_horario in self.horarios_asignaciones:
             if a_horario.seleccionado:
-                historial =  {'fecha_inicio':self.fecha_inicio, 'fecha_fin':False, 'alumno_id':self.alumno_id.id, 'horario_id':a_horario.horario_id.id }
+                fecha_fin = False
+                if self.fecha_fin == False:
+                    self.fecha_fin = False
+                else:
+                    fecha_fin = self.fecha_fin
+                historial =  {'fecha_inicio':self.fecha_inicio, 'fecha_fin':fecha_fin, 'alumno_id':self.alumno_id.id, 'horario_id':a_horario.horario_id.id }
                 hist_id = self.env['cursos.historial'].create(historial)
         return {'type': 'ir.actions.act_window_close'}
 
@@ -152,6 +143,7 @@ class asignacion_horario(models.TransientModel):
 
     _name = 'cursos.asignacion_horario'
 
+    asignacion_id = fields.Many2one('cursos.asignacion','horario', required=True)
     seleccionado = fields.Boolean('Sel')
     cupo_disponible = fields.Integer('Cupo Disponible')
     horario_id = fields.Many2one('cursos.horario','horario', required=True)
@@ -173,6 +165,7 @@ class asistencia(models.Model):
         ('si', 'Si Llego'),
         ('no', 'No Llego'),
         ('tarde', 'Llego tarde')], 'Tipo Asistencia')
+    reposicion = fields.Boolean('Reposición')
 
 class asistencia_wizard(models.TransientModel):
 
@@ -221,7 +214,7 @@ class asistencia_wizard(models.TransientModel):
 
     def guardar_asistencia(self):
         for asistencia_alumno in self.asistencias_alumnos:
-            asistencia =  {'fecha':self.fecha, 'alumno_id':asistencia_alumno.alumno_id.id, 'horario_id':asistencia_alumno.horario_id.id, 'estado_asistencia':asistencia_alumno.estado_asistencia }
+            asistencia =  {'fecha':self.fecha, 'alumno_id':asistencia_alumno.alumno_id.id, 'horario_id':asistencia_alumno.horario_id.id, 'estado_asistencia':asistencia_alumno.estado_asistencia, 'reposicion': asistencias_alumno.reposicion }
             asistencia_id = self.env['cursos.asistencia'].create(asistencia)
 
         return {'type': 'ir.actions.act_window_close'}
@@ -237,12 +230,14 @@ class asistencia_wizard_alumno(models.TransientModel):
         ('si', 'Si Llego'),
         ('no', 'No Llego'),
         ('tarde', 'Llego tarde')], 'Tipo Asistencia', required=True, default='si')
+    reposicion = fields.Boolean('Reposición')
 
 class evento(models.Model):
 
     _name = 'cursos.evento'
 
     fecha_inicio = fields.Datetime('Fecha Inicio', required=True)
+    alumnos = fields.Char(compute='_get_alumnos')
     fecha_fin = fields.Datetime('Fecha Fin', required=True)
     horario_id = fields.Many2one('cursos.horario','Horario', required=True)
     curso_id = fields.Many2one(related='horario_id.curso_id', store=True)
@@ -256,3 +251,10 @@ class evento(models.Model):
         for ev in self:
             res.append((ev.id, ev.curso_name + ", " + ev.fecha_inicio + " - " + ev.fecha_fin))
         return res
+
+    def  _get_alumnos(self):
+        for evento in self:
+            alumnos_lista = []
+            for linea in evento.historial_curso_ids:
+                alumnos_lista.append(linea.alumno_id.name)
+            evento.alumnos =', '.join(alumnos_lista)

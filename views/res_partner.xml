@@ -18,6 +18,9 @@
                             </group>
                         </page>
                     </xpath> 
+                    <field name="category_id" position="after">
+                        <field name="curso_asignado"/>
+                    </field>
                 </data>
             </field>
         </record>

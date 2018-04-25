@@ -11,6 +11,7 @@
           <field name="fecha"/>
           <field name="horario_id"/>
           <field name="estado_asistencia"/>
+          <field name="reposicion"/>
         </tree>
       </field>
     </record>
@@ -21,10 +22,16 @@
       <field name="mode">primary</field>
       <field name="arch" type="xml">
         <form>
-          <field name="alumno_id"/>
-          <field name="horario_id"/>
-          <field name="fecha_inicio"/>
-          <field name="fecha_fin"/>
+          <group>
+            <group>
+              <field name="alumno_id"/>
+              <field name="horario_id"/>
+            </group>
+            <group>
+              <field name="fecha_inicio"/>
+              <field name="fecha_fin"/>
+            </group>
+          </group>
         </form>
       </field>
     </record>
@@ -165,6 +172,7 @@
                     </group>
                     <group>
                         <field name="alumno_id"/>
+                        <field name="fecha_fin"/>
                     </group>
                     <field name="horarios_asignaciones"/>
                 </group>
@@ -182,13 +190,13 @@
       <field name="model">cursos.asignacion_horario</field>
       <field name="arch" type="xml">
         <tree editable="bottom">
-          <field name="seleccionado"/>
+          <field name="seleccionado" readonly="False"/>
           <field name="cupo" readonly="True"/>
           <field name="dia" readonly="True"/>
           <field name="hora_inicio" widget="float_time" readonly="True"/>
           <field name="hora_fin" widget="float_time" readonly="True"/>
-          <field name="cupo_disponible"/>
-          <field name="congelados" />
+          <field name="cupo_disponible" readonly="True"/>
+          <field name="congelados" readonly="True"/>
         </tree>
       </field>
     </record>
@@ -233,7 +241,8 @@
       <field name="arch" type="xml">
         <tree editable="bottom">
           <field name="nombre"/>
-          <field name="estado_asistencia"/>
+          <field name="estado_asistencia" widget='radio' options="{'horizontal': true}"/>
+          <field name="reposicion"/>
         </tree>
       </field>
     </record>
@@ -252,7 +261,8 @@
         <field name="model">cursos.evento</field>
         <field name="arch" type="xml">
             <calendar string="Eventos"  date_start="fecha_inicio" date_stop="fecha_fin" color="curso_id">
-                <field name="curso_name"/>
+                  <!-- <field name="curso_name"/> -->
+                  <field name="alumnos"/>
             </calendar>
         </field>
     </record>
