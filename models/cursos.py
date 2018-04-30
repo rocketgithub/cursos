@@ -214,7 +214,9 @@ class asistencia_wizard(models.TransientModel):
 
     def guardar_asistencia(self):
         for asistencia_alumno in self.asistencias_alumnos:
-            asistencia =  {'fecha':self.fecha, 'alumno_id':asistencia_alumno.alumno_id.id, 'horario_id':asistencia_alumno.horario_id.id, 'estado_asistencia':asistencia_alumno.estado_asistencia, 'reposicion': asistencias_alumno.reposicion }
+            logging.warn('estado asistencia')
+            logging.warn(asistencia_alumno.estado_asistencia)
+            asistencia =  {'fecha':self.fecha, 'alumno_id':asistencia_alumno.alumno_id.id, 'horario_id':asistencia_alumno.horario_id.id, 'estado_asistencia':asistencia_alumno.estado_asistencia, 'reposicion': asistencia_alumno.reposicion }
             asistencia_id = self.env['cursos.asistencia'].create(asistencia)
 
         return {'type': 'ir.actions.act_window_close'}
