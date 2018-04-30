@@ -59,7 +59,7 @@ class horario(models.Model):
         fecha_fin = fields.Datetime.from_string(self.curso_id.fecha_fin)
         fecha = fecha_inicio
         dias_dif = 1
-        while fecha<=fecha_fin:
+        while fecha <= fecha_fin:
             logging.warn(fecha)
             if dia_semana == fecha.weekday():
                 f_i = fecha.replace(hour=hora_i+6, minute=minuto_i)
@@ -110,7 +110,7 @@ class asignacion(models.TransientModel):
                         fecha_c_i = datetime.datetime.strptime(historial.fecha_inicio_congelamiento, "%Y-%m-%d")
                         if (fecha_c_f >= fecha_hoy) & (fecha_c_i <= fecha_hoy):
                             congelados = congelados +1
-                asign_horario =  {'seleccionado': False, 'cupo_disponible':cupo_disp, 'horario_id':horario.id, 'congelados': congelados }
+                asign_horario =  {'asignacion_id':self.id, 'seleccionado': False, 'cupo_disponible':cupo_disp, 'horario_id':horario.id, 'congelados': congelados }
                 asign_horario_id = self.env['cursos.asignacion_horario'].create(asign_horario)
                 h_cupo = (4,asign_horario_id.id)
                 horarios_array.append(h_cupo)
@@ -200,7 +200,7 @@ class asistencia_wizard(models.TransientModel):
                 alumnos_array.append(w_alumno)
 
         self.write({'asistencias_alumnos': alumnos_array})
-            
+
         return {
             'context': self.env.context,
             'view_type': 'form',
