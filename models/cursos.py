@@ -3,6 +3,7 @@
 from odoo import api, models, tools, fields
 
 import logging
+import time
 import datetime
 import pytz
 from pytz import timezone
@@ -34,7 +35,7 @@ class horario(models.Model):
     profesores = fields.Many2many('res.partner','horario_partner_rel1', 'horario_id','partner_id', 'Profesores')
     hora_inicio = fields.Float('Hora Inicio')
     hora_fin = fields.Float('Hora Fin')
-    historial_curso_ids = fields.One2many('cursos.historial','horario_id', domain=[('fecha_fin','=',False)],string = 'Historial', readonly= True )
+    historial_curso_ids = fields.One2many('cursos.historial','horario_id', domain=['|',('fecha_fin','=',False),('fecha_fin','>',datetime.datetime.now().strftime("%Y-%m-%d"))],string = 'Historial', readonly= True )
 
     @api.multi
     def name_get(self):
@@ -77,9 +78,7 @@ class historial(models.Model):
     fecha_fin = fields.Date('Fecha Fin')
     alumno_id = fields.Many2one('res.partner','Alumno')
     horario_id = fields.Many2one('cursos.horario','Horario')
-    fecha_congelamiento = fields.Date(related='alumno_id.fecha_congelamiento', store=True)
     nombre_alumno = fields.Char(related='alumno_id.name', store=True)
-    fecha_inicio_congelamiento = fields.Date(related='alumno_id.fecha_inicio_congelamiento', store=True)
 
 class asignacion(models.TransientModel):
 
@@ -99,17 +98,20 @@ class asignacion(models.TransientModel):
         horarios_array = []
         for horario in horarios:
             historiales = self.env['cursos.historial'].search([('horario_id','=',horario.id),('fecha_fin','=',False)])
+            historiales_congelamientos = self.env['cursos.congelamiento'].search([('horario_id','=',horario.id)])
             # Buscar cupo
             if len(historiales) < horario.cupo:
                 cupo_disp = horario.cupo - len(historiales)
                 congelados = 0
-                fecha_hoy = datetime.datetime.now()
-                for historial in historiales:
-                    if historial.fecha_congelamiento:
-                        fecha_c_f = datetime.datetime.strptime(historial.fecha_congelamiento, "%Y-%m-%d")
-                        fecha_c_i = datetime.datetime.strptime(historial.fecha_inicio_congelamiento, "%Y-%m-%d")
-                        if (fecha_c_f >= fecha_hoy) & (fecha_c_i <= fecha_hoy):
+                # fecha_hoy = datetime.datetime.now().strftime("%Y-%m-%d")
+                fecha_asignacion = datetime.datetime.strptime(self.fecha_inicio,"%Y-%m-%d")
+                for congelamiento in historiales_congelamientos:
+                    if congelamiento.fecha_congelamiento:
+                        fecha_c_f = datetime.datetime.strptime(congelamiento.fecha_congelamiento, "%Y-%m-%d")
+                        fecha_c_i = datetime.datetime.strptime(congelamiento.fecha_inicio_congelamiento, "%Y-%m-%d")
+                        if (fecha_c_f >= fecha_asignacion) & (fecha_c_i <= fecha_asignacion):
                             congelados = congelados +1
+                            logging.warn(congelados)
                 asign_horario =  {'asignacion_id':self.id, 'seleccionado': False, 'cupo_disponible':cupo_disp, 'horario_id':horario.id, 'congelados': congelados }
                 asign_horario_id = self.env['cursos.asignacion_horario'].create(asign_horario)
                 h_cupo = (4,asign_horario_id.id)
@@ -179,20 +181,22 @@ class asistencia_wizard(models.TransientModel):
     def buscar_alumnos(self):
         historiales = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('fecha_fin','=',False),('horario_id.dia','=',self.dia)])
         historiales2 = sorted(historiales, key=lambda hist: hist.nombre_alumno)
+        historiales_congelamientos = self.env['cursos.congelamiento'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.dia','=',self.dia)])
         alumnos_array = []
-        fecha_hoy = datetime.datetime.now()
+        # fecha_hoy = datetime.datetime.now().strftime("%Y-%m-%d")
+        fecha_asistencia = datetime.datetime.strptime(fecha,"%Y-%m-%d")
         # Limpiar detalle de asistencias alumnos
         for aa in self.asistencias_alumnos:
             self.write({'asistencias_alumnos': [(2,aa.id)]})
 
         for historial in historiales2:
             agregar = True
-            if historial.fecha_congelamiento:
-                fecha_c_f = datetime.datetime.strptime(historial.fecha_congelamiento, "%Y-%m-%d")
-                fecha_c_i = datetime.datetime.strptime(historial.fecha_inicio_congelamiento, "%Y-%m-%d")
-                if (fecha_c_f >= fecha_hoy) & (fecha_c_i <= fecha_hoy):
-                    agregar = False
-
+            for congelamiento in historiales_congelamientos:
+                if congelamiento.alumno_id.id == historial.alumno_id.id and congelamiento.horario_id.id == historial.horario_id.id:
+                    fecha_c_f = datetime.datetime.strptime(congelamiento.fecha_congelamiento, "%Y-%m-%d")
+                    fecha_c_i = datetime.datetime.strptime(congelamiento.fecha_inicio_congelamiento, "%Y-%m-%d")
+                    if (fecha_c_f >= fecha_asistencia) & (fecha_c_i <= fecha_asistencia):
+                        agregar = False
             if agregar:
                 wizard_alumno =  {'alumno_id':historial.alumno_id.id, 'horario_id':historial.horario_id.id }
                 wizard_alumno_id = self.env['cursos.asistencia_wizard_alumno'].create(wizard_alumno)
@@ -260,3 +264,12 @@ class evento(models.Model):
             for linea in evento.historial_curso_ids:
                 alumnos_lista.append(linea.alumno_id.name)
             evento.alumnos =', '.join(alumnos_lista)
+
+class congelamiento(models.Model):
+    _name = 'cursos.congelamiento'
+
+    alumno_id = fields.Many2one('res.partner','Alumno')
+    horario_id = fields.Many2one('cursos.horario','Horario')
+    fecha_congelamiento = fields.Date('Fecha fin congelamiento')
+    fecha_inicio_congelamiento = fields.Date('Fecha inicio congelamiento')
+    razon_congelamiento = fields.Char('Razón congelamiento')

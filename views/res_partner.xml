@@ -10,7 +10,9 @@
                         <page string="Historial">
                             <group>
                                 <field name="historial_curso_ids"/>
+                                <field name="historial_congelado_ids"/>
                             </group>
+
                         </page>
                         <page string="Asistencias">
                             <group>

@@ -46,8 +46,21 @@
           <field name="horario_id"/>
           <field name="fecha_inicio"/>
           <field name="fecha_fin"/>
+<!--           <field name="fecha_inicio_congelamiento"/>
+          <field name="fecha_congelamiento"/> -->
+        </tree>
+      </field>
+    </record>
+
+   <record model="ir.ui.view" id="cursos_congelamiento_tree">
+      <field name="name">cursos_congelamiento.tree</field>
+      <field name="model">cursos.congelamiento</field>
+      <field name="arch" type="xml">
+        <tree editable="bottom">
+          <field name="horario_id"/>
           <field name="fecha_inicio_congelamiento"/>
           <field name="fecha_congelamiento"/>
+          <field name="razon_congelamiento"/>
         </tree>
       </field>
     </record>
@@ -133,7 +146,7 @@
                  <button name="generar_eventos" string="Generar Eventos" type="object" class="btn-primary"/>
              </group>
              <field name="profesores"/>
-             <field name="historial_curso_ids"/>
+             <field name="historial_curso_ids" domain="[('fecha_fin', '=', context_today())]"/>
          </group>
         </form>
       </field>
@@ -241,7 +254,8 @@
       <field name="arch" type="xml">
         <tree editable="bottom">
           <field name="nombre"/>
-          <field name="estado_asistencia" widget='radio' options="{'horizontal': true}"/>
+          <!-- <field name="estado_asistencia" widget='radio' options="{'horizontal': true}"/> -->
+          <field name="estado_asistencia"/>
           <field name="reposicion"/>
         </tree>
       </field>
