@@ -6,7 +6,7 @@ access_cursos_curso_manager,cursos.curso.manager,model_cursos_curso,sales_team.g
 access_cursos_horario_user,cursos.horario.user,model_cursos_horario,base.group_user,1,0,0,0
 access_cursos_horario_manager,cursos.horario.manager,model_cursos_horario,sales_team.group_sale_manager,1,1,1,1
 access_cursos_historial_user,cursos.historial.user,model_cursos_historial,base.group_user,1,0,0,0
-access_cursos_historial_manager,cursos.historial.manager,model_cursos_historial,sales_team.group_sale_manager,1,1,1,1
+access_cursos_historial_manager,cursos.historial.manager,model_cursos_historial,base.group_erp_manager,1,1,1,1
 access_cursos_asignacion_user,cursos.asignacion.user,model_cursos_asignacion,base.group_user,1,0,0,0
 access_cursos_asignacion_manager,cursos.asignacion.manager,model_cursos_asignacion,sales_team.group_sale_manager,1,1,1,1
 access_cursos_asignacion_horario_user,cursos.asignacion_horario.user,model_cursos_asignacion_horario,base.group_user,1,0,0,0
