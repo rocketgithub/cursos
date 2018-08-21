@@ -174,12 +174,13 @@ class asistencia_wizard(models.TransientModel):
     _name = 'cursos.asistencia_wizard'
 
     fecha = fields.Date('Fecha', required=True)
+    sede_id = fields.Many2one('cursos.sede','Sede', required=True)
     hora = fields.Float('Hora', required=True)
     dia = fields.Selection(dias_array, 'Dia', required=True)
     asistencias_alumnos = fields.Many2many('cursos.asistencia_wizard_alumno','asistencia_wizard_alumnos_rel1', 'asistencia_wizard_id','asistencia_wizard_alumno_id', 'Alumnos')
 
     def buscar_alumnos(self):
-        historiales = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('fecha_fin','=',False),('horario_id.dia','=',self.dia)])
+        historiales = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_fin','=',False),('horario_id.dia','=',self.dia)])
         historiales2 = sorted(historiales, key=lambda hist: hist.nombre_alumno)
         historiales_congelamientos = self.env['cursos.congelamiento'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.dia','=',self.dia)])
         alumnos_array = []
