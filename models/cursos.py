@@ -184,7 +184,7 @@ class asistencia_wizard(models.TransientModel):
         historiales_congelamientos = self.env['cursos.congelamiento'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.dia','=',self.dia)])
         alumnos_array = []
         # fecha_hoy = datetime.datetime.now().strftime("%Y-%m-%d")
-        fecha_asistencia = datetime.datetime.strptime(fecha,"%Y-%m-%d")
+        fecha_asistencia = datetime.datetime.strptime(self.fecha,"%Y-%m-%d")
         # Limpiar detalle de asistencias alumnos
         for aa in self.asistencias_alumnos:
             self.write({'asistencias_alumnos': [(2,aa.id)]})
