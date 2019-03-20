@@ -79,6 +79,7 @@ class historial(models.Model):
     alumno_id = fields.Many2one('res.partner','Alumno')
     horario_id = fields.Many2one('cursos.horario','Horario')
     nombre_alumno = fields.Char(related='alumno_id.name', store=True)
+    reposicion = fields.Boolean('Reposición')
 
 class asignacion(models.TransientModel):
 
@@ -137,7 +138,7 @@ class asignacion(models.TransientModel):
                     self.fecha_fin = False
                 else:
                     fecha_fin = self.fecha_fin
-                historial =  {'fecha_inicio':self.fecha_inicio, 'fecha_fin':fecha_fin, 'alumno_id':self.alumno_id.id, 'horario_id':a_horario.horario_id.id }
+                historial =  {'fecha_inicio':self.fecha_inicio, 'fecha_fin':fecha_fin, 'alumno_id':self.alumno_id.id, 'horario_id':a_horario.horario_id.id, 'reposicion': a_horario.reposicion }
                 hist_id = self.env['cursos.historial'].create(historial)
         return {'type': 'ir.actions.act_window_close'}
 
@@ -154,6 +155,7 @@ class asignacion_horario(models.TransientModel):
     hora_inicio = fields.Float(related='horario_id.hora_inicio', store=False)
     hora_fin = fields.Float(related='horario_id.hora_fin', store=False)
     congelados = fields.Integer('Congelados')
+    reposicion = fields.Boolean('Reposición')
 
 
 class asistencia(models.Model):
@@ -180,7 +182,9 @@ class asistencia_wizard(models.TransientModel):
     asistencias_alumnos = fields.Many2many('cursos.asistencia_wizard_alumno','asistencia_wizard_alumnos_rel1', 'asistencia_wizard_id','asistencia_wizard_alumno_id', 'Alumnos')
 
     def buscar_alumnos(self):
+        historiales_reposicion = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.curso_id.sede_id','=',self.sede_id.id),('horario_id.dia','=',self.dia),('reposicion','=',True)])
         historiales = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_fin','=',False),('horario_id.dia','=',self.dia)])
+        historiales = historiales + historiales_reposicion
         historiales2 = sorted(historiales, key=lambda hist: hist.nombre_alumno)
         historiales_congelamientos = self.env['cursos.congelamiento'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.dia','=',self.dia)])
         alumnos_array = []
@@ -191,6 +195,7 @@ class asistencia_wizard(models.TransientModel):
             self.write({'asistencias_alumnos': [(2,aa.id)]})
 
         for historial in historiales2:
+            logging.warn(historial)
             agregar = True
             for congelamiento in historiales_congelamientos:
                 if congelamiento.alumno_id.id == historial.alumno_id.id and congelamiento.horario_id.id == historial.horario_id.id:
@@ -199,7 +204,8 @@ class asistencia_wizard(models.TransientModel):
                     if (fecha_c_f >= fecha_asistencia) & (fecha_c_i <= fecha_asistencia):
                         agregar = False
             if agregar:
-                wizard_alumno =  {'alumno_id':historial.alumno_id.id, 'horario_id':historial.horario_id.id }
+                logging.warn(historial.reposicion)
+                wizard_alumno =  {'alumno_id':historial.alumno_id.id, 'horario_id':historial.horario_id.id , 'reposicion': historial.reposicion}
                 wizard_alumno_id = self.env['cursos.asistencia_wizard_alumno'].create(wizard_alumno)
                 w_alumno = (4,wizard_alumno_id.id)
                 alumnos_array.append(w_alumno)

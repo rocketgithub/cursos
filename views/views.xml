@@ -30,6 +30,7 @@
             <group>
               <field name="fecha_inicio"/>
               <field name="fecha_fin"/>
+              <field name="reposicion"/>
             </group>
           </group>
         </form>
@@ -46,6 +47,7 @@
           <field name="horario_id"/>
           <field name="fecha_inicio"/>
           <field name="fecha_fin"/>
+          <field name="reposicion"/>
 <!--           <field name="fecha_inicio_congelamiento"/>
           <field name="fecha_congelamiento"/> -->
         </tree>
@@ -210,6 +212,7 @@
           <field name="hora_fin" widget="float_time" readonly="True"/>
           <field name="cupo_disponible" readonly="True"/>
           <field name="congelados" readonly="True"/>
+          <field name="reposicion"/>
         </tree>
       </field>
     </record>
