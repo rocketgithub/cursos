@@ -180,9 +180,13 @@ class asistencia_wizard(models.TransientModel):
     asistencias_alumnos = fields.Many2many('cursos.asistencia_wizard_alumno','asistencia_wizard_alumnos_rel1', 'asistencia_wizard_id','asistencia_wizard_alumno_id', 'Alumnos')
 
     def buscar_alumnos(self):
-        historiales = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_fin','=',False),('horario_id.dia','=',self.dia)])
+        historiales = self.env['cursos.historial'].search([('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_fin','=',False),('horario_id.dia','=',self.dia)])
+        historiales = list(filter(lambda x: round(x.horario_id.hora_inicio, 4) == round(self.hora, 4), historiales))
         historiales2 = sorted(historiales, key=lambda hist: hist.nombre_alumno)
         historiales_congelamientos = self.env['cursos.congelamiento'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.dia','=',self.dia)])
+        logging.warn(self.hora)
+        logging.warn(historiales)
+        logging.warn(historiales_congelamientos)
         alumnos_array = []
         # fecha_hoy = datetime.datetime.now().strftime("%Y-%m-%d")
         fecha_asistencia = datetime.datetime.strptime(self.fecha,"%Y-%m-%d")
