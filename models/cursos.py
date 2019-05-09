@@ -182,9 +182,19 @@ class asistencia_wizard(models.TransientModel):
     asistencias_alumnos = fields.Many2many('cursos.asistencia_wizard_alumno','asistencia_wizard_alumnos_rel1', 'asistencia_wizard_id','asistencia_wizard_alumno_id', 'Alumnos')
 
     def buscar_alumnos(self):
-        historiales_reposicion = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.curso_id.sede_id','=',self.sede_id.id),('horario_id.dia','=',self.dia),('reposicion','=',True)])
-        historiales = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_fin','=',False),('horario_id.dia','=',self.dia)])
-        historiales = historiales + historiales_reposicion
+        historiales_reposicion = self.env['cursos.historial'].search([('horario_id.curso_id.sede_id','=',self.sede_id.id),('horario_id.dia','=',self.dia),('reposicion','=',True),('alumno_id','!=',False)])
+        # historiales_reposicion = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.curso_id.sede_id','=',self.sede_id.id),('horario_id.dia','=',self.dia),('reposicion','=',True)])
+        # historiales = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_fin','=',False),('horario_id.dia','=',self.dia)])
+        historiales = self.env['cursos.historial'].search([('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_fin','=',False),('horario_id.dia','=',self.dia),('alumno_id','!=',False)])
+        historiales_horario = []
+        for historial in historiales:
+            if historial.horario_id.hora_inicio == self.hora:
+                historiales_horario.append(historial)
+        historiales_reposicion_lista = []
+        for historial in historiales_reposicion:
+            if historial.horario_id.hora_inicio == self.hora:
+                historiales_reposicion_lista.append(historial)
+        historiales = historiales_horario + historiales_reposicion_lista
         historiales2 = sorted(historiales, key=lambda hist: hist.nombre_alumno)
         historiales_congelamientos = self.env['cursos.congelamiento'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.dia','=',self.dia)])
         alumnos_array = []
@@ -195,7 +205,6 @@ class asistencia_wizard(models.TransientModel):
             self.write({'asistencias_alumnos': [(2,aa.id)]})
 
         for historial in historiales2:
-            logging.warn(historial)
             agregar = True
             for congelamiento in historiales_congelamientos:
                 if congelamiento.alumno_id.id == historial.alumno_id.id and congelamiento.horario_id.id == historial.horario_id.id:
@@ -204,7 +213,6 @@ class asistencia_wizard(models.TransientModel):
                     if (fecha_c_f >= fecha_asistencia) & (fecha_c_i <= fecha_asistencia):
                         agregar = False
             if agregar:
-                logging.warn(historial.reposicion)
                 wizard_alumno =  {'alumno_id':historial.alumno_id.id, 'horario_id':historial.horario_id.id , 'reposicion': historial.reposicion}
                 wizard_alumno_id = self.env['cursos.asistencia_wizard_alumno'].create(wizard_alumno)
                 w_alumno = (4,wizard_alumno_id.id)
