@@ -187,6 +187,7 @@ class asistencia_wizard(models.TransientModel):
         # historiales = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_fin','=',False),('horario_id.dia','=',self.dia)])
         historiales = self.env['cursos.historial'].search([('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_fin','=',False),('horario_id.dia','=',self.dia),('alumno_id','!=',False)])
         historiales_horario = []
+        congelados = []
         for historial in historiales:
             if historial.horario_id.hora_inicio == self.hora:
                 historiales_horario.append(historial)
@@ -196,7 +197,10 @@ class asistencia_wizard(models.TransientModel):
                 historiales_reposicion_lista.append(historial)
         historiales = historiales_horario + historiales_reposicion_lista
         historiales2 = sorted(historiales, key=lambda hist: hist.nombre_alumno)
-        historiales_congelamientos = self.env['cursos.congelamiento'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.dia','=',self.dia)])
+        historiales_congelamientos = self.env['cursos.congelamiento'].search([('horario_id.dia','=',self.dia)])
+        for congelado in historiales_congelamientos:
+            if congelado.horario_id.hora_inicio == self.hora:
+                congelados.append(congelado)
         alumnos_array = []
         # fecha_hoy = datetime.datetime.now().strftime("%Y-%m-%d")
         fecha_asistencia = datetime.datetime.strptime(self.fecha,"%Y-%m-%d")
@@ -206,7 +210,7 @@ class asistencia_wizard(models.TransientModel):
 
         for historial in historiales2:
             agregar = True
-            for congelamiento in historiales_congelamientos:
+            for congelamiento in congelados:
                 if congelamiento.alumno_id.id == historial.alumno_id.id and congelamiento.horario_id.id == historial.horario_id.id:
                     fecha_c_f = datetime.datetime.strptime(congelamiento.fecha_congelamiento, "%Y-%m-%d")
                     fecha_c_i = datetime.datetime.strptime(congelamiento.fecha_inicio_congelamiento, "%Y-%m-%d")
