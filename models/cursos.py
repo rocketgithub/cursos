@@ -251,6 +251,7 @@ class asistencia_wizard_alumno(models.TransientModel):
     alumno_id = fields.Many2one('res.partner','Alumno', readonly= True)
     nombre = fields.Char(related='alumno_id.name', store=False, readonly= True)
     horario_id = fields.Many2one('cursos.horario','Horario')
+    curso = fields.Char(related='horario_id.curso_id.name',store=False, readonly= True)
     estado_asistencia = fields.Selection([
         ('si', 'Si Llego'),
         ('no', 'No Llego'),
