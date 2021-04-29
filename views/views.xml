@@ -140,6 +140,7 @@
              <group>
                  <field name="curso_id"/>
                  <field name="cupo"/>
+                 <field name="cupo_disponible"/>
                  <field name="dia"/>
              </group>
              <group>
@@ -161,6 +162,7 @@
         <tree>
           <field name="curso_id"/>
           <field name="cupo"/>
+          <field name="cupo_disponible"/>
           <field name="dia"/>
           <field name="hora_inicio" widget="float_time"/>
           <field name="hora_fin" widget="float_time"/>

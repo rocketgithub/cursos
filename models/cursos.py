@@ -35,7 +35,15 @@ class horario(models.Model):
     profesores = fields.Many2many('res.partner','horario_partner_rel1', 'horario_id','partner_id', 'Profesores')
     hora_inicio = fields.Float('Hora Inicio')
     hora_fin = fields.Float('Hora Fin')
-    historial_curso_ids = fields.One2many('cursos.historial','horario_id', domain=['|',('fecha_fin','=',False),('fecha_fin','>',datetime.datetime.now().strftime("%Y-%m-%d"))],string = 'Historial', readonly= True )
+    historial_curso_ids = fields.One2many('cursos.historial','horario_id', domain=[('fecha_fin','=',False)],string = 'Historial', readonly= True )
+    cupo_disponible = fields.Integer('Cupo disponible',compute='_get_cupo_disponible')
+
+    def _get_cupo_disponible(self):
+        for horario in self:
+            cupo_disponible = horario.cupo - len(horario.historial_curso_ids)
+            historiales_congelamientos = self.env['cursos.congelamiento'].search([('horario_id','=',horario.id)])
+
+            horario.cupo_disponible = cupo_disponible + len(historiales_congelamientos)
 
     @api.multi
     def name_get(self):
@@ -101,22 +109,36 @@ class asignacion(models.TransientModel):
             historiales = self.env['cursos.historial'].search([('horario_id','=',horario.id),('fecha_fin','=',False)])
             historiales_congelamientos = self.env['cursos.congelamiento'].search([('horario_id','=',horario.id)])
             # Buscar cupo
-            if len(historiales) < horario.cupo:
-                cupo_disp = horario.cupo - len(historiales)
+            alumnos_asignados = 0
+            alumnos_reposicion = 0
+            fecha_asignacion = datetime.datetime.strptime(self.fecha_inicio,"%Y-%m-%d")
+            for historial in historiales:
+                if historial.reposicion:
+                    fecha_c_f = datetime.datetime.strptime(historial.fecha_inicio, "%Y-%m-%d")
+                    if (fecha_asignacion <= fecha_c_f <= fecha_asignacion):
+                        alumnos_reposicion += 1
+                else:
+                    alumnos_asignados += 1
+            cupo_disp = horario.cupo - alumnos_asignados
+            fecha_asignacion = datetime.datetime.strptime(self.fecha_inicio,"%Y-%m-%d")
+            if len(historiales):
+                logging.warn('entra')
+                # cupo_disp = horario.cupo - len(historiales)
                 congelados = 0
                 # fecha_hoy = datetime.datetime.now().strftime("%Y-%m-%d")
-                fecha_asignacion = datetime.datetime.strptime(self.fecha_inicio,"%Y-%m-%d")
                 for congelamiento in historiales_congelamientos:
                     if congelamiento.fecha_congelamiento:
                         fecha_c_f = datetime.datetime.strptime(congelamiento.fecha_congelamiento, "%Y-%m-%d")
                         fecha_c_i = datetime.datetime.strptime(congelamiento.fecha_inicio_congelamiento, "%Y-%m-%d")
                         if (fecha_c_f >= fecha_asignacion) & (fecha_c_i <= fecha_asignacion):
                             congelados = congelados +1
-                            logging.warn(congelados)
-                asign_horario =  {'asignacion_id':self.id, 'seleccionado': False, 'cupo_disponible':cupo_disp, 'horario_id':horario.id, 'congelados': congelados }
-                asign_horario_id = self.env['cursos.asignacion_horario'].create(asign_horario)
-                h_cupo = (4,asign_horario_id.id)
-                horarios_array.append(h_cupo)
+
+                cupo_disp += congelados - alumnos_reposicion
+                if cupo_disp > 0:
+                    asign_horario =  {'asignacion_id':self.id, 'seleccionado': False, 'cupo_disponible':cupo_disp, 'horario_id':horario.id, 'congelados': congelados }
+                    asign_horario_id = self.env['cursos.asignacion_horario'].create(asign_horario)
+                    h_cupo = (4,asign_horario_id.id)
+                    horarios_array.append(h_cupo)
 
         self.write({'horarios_asignaciones': horarios_array})
         return {
