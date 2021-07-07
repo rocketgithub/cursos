@@ -103,21 +103,27 @@ class asignacion(models.TransientModel):
 
         horarios = self.env['cursos.horario'].search([('curso_id','=',self.curso_id.id)])
         horarios_array = []
-        for horario in horarios:
-            if self.fecha_inicio < self.curso_id.fecha_fin:
+        if self.fecha_inicio >= self.curso_id.fecha_inicio and self.fecha_inicio <= self.curso_id.fecha_fin:
+            for horario in horarios:
+                if self.fecha_inicio >= self.curso_id.fecha_inicio and self.fecha_inicio <= self.curso_id.fecha_fin:
+                    logging.warn('si')
                 historiales = self.env['cursos.historial'].search([('horario_id','=',horario.id),('fecha_fin','=',False)])
                 historiales_congelamientos = self.env['cursos.congelamiento'].search([('horario_id','=',horario.id)])
                 # Buscar cupo
                 alumnos_asignados = 0
                 alumnos_reposicion = 0
                 fecha_asignacion = datetime.datetime.strptime(self.fecha_inicio,"%Y-%m-%d")
-                for historial in historiales:
-                    if historial.reposicion:
-                        fecha_c_f = datetime.datetime.strptime(historial.fecha_inicio, "%Y-%m-%d")
-                        if (fecha_asignacion <= fecha_c_f <= fecha_asignacion):
-                            alumnos_reposicion += 1
-                    else:
-                        alumnos_asignados += 1
+                if len(historiales) > 0:
+                    for historial in historiales:
+                        if historial.reposicion:
+                            fecha_c_f = datetime.datetime.strptime(historial.fecha_inicio, "%Y-%m-%d")
+                            if (fecha_asignacion <= fecha_c_f <= fecha_asignacion):
+                                alumnos_reposicion += 1
+                        else:
+                            alumnos_asignados += 1
+                else:
+                    historiales = []
+                historiales.append(horario.id)
                 cupo_disp = horario.cupo - alumnos_asignados
                 fecha_asignacion = datetime.datetime.strptime(self.fecha_inicio,"%Y-%m-%d")
                 if len(historiales):
