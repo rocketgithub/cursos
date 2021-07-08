@@ -105,8 +105,6 @@ class asignacion(models.TransientModel):
         horarios_array = []
         if self.fecha_inicio >= self.curso_id.fecha_inicio and self.fecha_inicio <= self.curso_id.fecha_fin:
             for horario in horarios:
-                if self.fecha_inicio >= self.curso_id.fecha_inicio and self.fecha_inicio <= self.curso_id.fecha_fin:
-                    logging.warn('si')
                 historiales = self.env['cursos.historial'].search([('horario_id','=',horario.id),('fecha_fin','=',False)])
                 historiales_congelamientos = self.env['cursos.congelamiento'].search([('horario_id','=',horario.id)])
                 # Buscar cupo
@@ -122,8 +120,8 @@ class asignacion(models.TransientModel):
                         else:
                             alumnos_asignados += 1
                 else:
-                    historiales = []
-                historiales.append(horario.id)
+                    historiales = self.env['cursos.horario']
+                    historiales += horario
                 cupo_disp = horario.cupo - alumnos_asignados
                 fecha_asignacion = datetime.datetime.strptime(self.fecha_inicio,"%Y-%m-%d")
                 if len(historiales):
@@ -138,6 +136,8 @@ class asignacion(models.TransientModel):
                                 congelados = congelados +1
 
                     cupo_disp += congelados - alumnos_reposicion
+                    logging.warn('cupo_disp')
+                    logging.warn(cupo_disp)
                     if cupo_disp > 0:
                         asign_horario =  {'asignacion_id':self.id, 'seleccionado': False, 'cupo_disponible':cupo_disp, 'horario_id':horario.id, 'congelados': congelados }
                         asign_horario_id = self.env['cursos.asignacion_horario'].create(asign_horario)
@@ -208,7 +208,7 @@ class asistencia_wizard(models.TransientModel):
     asistencias_alumnos = fields.Many2many('cursos.asistencia_wizard_alumno','asistencia_wizard_alumnos_rel1', 'asistencia_wizard_id','asistencia_wizard_alumno_id', 'Alumnos')
 
     def buscar_alumnos(self):
-        historiales_reposicion = self.env['cursos.historial'].search([('horario_id.curso_id.sede_id','=',self.sede_id.id),('horario_id.dia','=',self.dia),('reposicion','=',True),('alumno_id','!=',False)])
+        historiales_reposicion = self.env['cursos.historial'].search([('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_inicio','=',self.fecha),('fecha_fin','=',self.fecha),('horario_id.dia','=',self.dia),('reposicion','=',True),('alumno_id','!=',False)])
         # historiales_reposicion = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.curso_id.sede_id','=',self.sede_id.id),('horario_id.dia','=',self.dia),('reposicion','=',True)])
         # historiales = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_fin','=',False),('horario_id.dia','=',self.dia)])
         historiales = self.env['cursos.historial'].search([('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_fin','=',False),('horario_id.dia','=',self.dia),('alumno_id','!=',False)])
