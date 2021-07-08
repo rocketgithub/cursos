@@ -136,8 +136,6 @@ class asignacion(models.TransientModel):
                                 congelados = congelados +1
 
                     cupo_disp += congelados - alumnos_reposicion
-                    logging.warn('cupo_disp')
-                    logging.warn(cupo_disp)
                     if cupo_disp > 0:
                         asign_horario =  {'asignacion_id':self.id, 'seleccionado': False, 'cupo_disponible':cupo_disp, 'horario_id':horario.id, 'congelados': congelados }
                         asign_horario_id = self.env['cursos.asignacion_horario'].create(asign_horario)

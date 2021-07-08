@@ -9,7 +9,7 @@
                     <xpath expr="//notebook" position="inside">
                         <page string="Historial">
                             <group>
-                                <field name="historial_curso_ids"/>
+                                <field name="historial_curso_ids" readonly="1"/>
                                 <field name="historial_congelado_ids"/>
                             </group>
 
@@ -19,7 +19,7 @@
                                 <field name="asistencia_curso_ids"/>
                             </group>
                         </page>
-                    </xpath> 
+                    </xpath>
 <!--                     <field name="category_id" position="after">
                         <field name="curso_asignado"/>
                     </field> -->
