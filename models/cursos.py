@@ -5,6 +5,7 @@ from odoo import api, models, tools, fields
 import logging
 import time
 import datetime
+from datetime import date
 import pytz
 from pytz import timezone
 
@@ -35,7 +36,7 @@ class horario(models.Model):
     profesores = fields.Many2many('res.partner','horario_partner_rel1', 'horario_id','partner_id', 'Profesores')
     hora_inicio = fields.Float('Hora Inicio')
     hora_fin = fields.Float('Hora Fin')
-    historial_curso_ids = fields.One2many('cursos.historial','horario_id', domain=[('fecha_fin','=',False)],string = 'Historial', readonly= True )
+    historial_curso_ids = fields.One2many('cursos.historial','horario_id', domain=[('fecha_fin','>=',date.today())],string = 'Historial', readonly= True )
     cupo_disponible = fields.Integer('Cupo disponible',compute='_get_cupo_disponible')
 
     def _get_cupo_disponible(self):
@@ -210,11 +211,15 @@ class asistencia_wizard(models.TransientModel):
         # historiales_reposicion = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.curso_id.sede_id','=',self.sede_id.id),('horario_id.dia','=',self.dia),('reposicion','=',True)])
         # historiales = self.env['cursos.historial'].search([('horario_id.hora_inicio','=',self.hora),('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_fin','=',False),('horario_id.dia','=',self.dia)])
         historiales = self.env['cursos.historial'].search([('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_fin','=',False),('horario_id.dia','=',self.dia),('alumno_id','!=',False)])
+        historiales_fecha_incio_fin = self.env['cursos.historial'].search([('horario_id.curso_id.sede_id','=',self.sede_id.id),('fecha_inicio','>=',self.fecha),('fecha_fin','<=',self.fecha),('horario_id.dia','=',self.dia),('alumno_id','!=',False)])
         historiales_horario = []
         congelados = []
         for historial in historiales:
             if historial.horario_id.hora_inicio == self.hora:
                 historiales_horario.append(historial)
+        for historial in historiales_fecha_incio_fin:
+            if historial.horario_id.hora_inicio == self.hora:
+                historiales_horario.append(historial)                    
         historiales_reposicion_lista = []
         for historial in historiales_reposicion:
             if historial.horario_id.hora_inicio == self.hora:
